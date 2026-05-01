@@ -27,3 +27,98 @@ For every ticket, the agent:
 3. Risk-aware decision system
 4. No external data usage (strictly corpus-based)
 5. Transparent logging for every decision
+
+# Output Format
+The system generates a CSV with:
+	ticket_id
+	request_type
+	product_area
+	decision (RESPOND / SAFE_RESPOND / ESCALATE)
+	response
+
+# Decision Logic (Important)
+	HIGH risk → always escalated
+	MEDIUM risk → safe response
+	LOW risk → respond if confidence is high
+	Low retrieval confidence → escalated
+
+# Constraints Followed
+	Uses only provided support corpus
+	No hallucinated policies
+	Safe handling of sensitive issues
+	Clear and explainable decisions
+
+# Notes
+This is not a generic chatbot. It is a controlled triage system designed for:
+	Accuracy over creativity
+	Safety over completeness
+	Deterministic behavior over guesswork
+
+# Architecture Diagram
+                ┌────────────────────┐
+                │   Input Ticket     │
+                └─────────┬──────────┘
+                          │
+                          ▼
+        ┌────────────────────────────────┐
+        │ Intent + Risk Classification   │
+        │ (LOW / MEDIUM / HIGH)          │
+        └─────────┬──────────────────────┘
+                  │
+                  ▼
+        ┌──────────────────────────────┐
+        │ Domain Classification        │
+        │ (HackerRank / Claude / Visa) │
+        └─────────┬────────────────────┘
+                  │
+                  ▼
+        ┌──────────────────────────────┐
+        │ Domain-Specific Retrieval    │
+        │ (FAISS + Embeddings)         │
+        └─────────┬────────────────────┘
+                  │
+                  ▼
+        ┌──────────────────────────────┐
+        │ Reranking Layer              │
+        │ (Sentence-level scoring)     │
+        └─────────┬────────────────────┘
+                  │
+                  ▼
+        ┌──────────────────────────────┐
+        │ Decision Engine              │
+        │ RESPOND / SAFE / ESCALATE    │
+        └─────────┬────────────────────┘
+                  │
+                  ▼
+        ┌──────────────────────────────┐
+        │ Grounded Response Generator  │
+        └─────────┬────────────────────┘
+                  │
+                  ▼
+        ┌──────────────────────────────┐
+        │ Output CSV + Logs            │
+        └──────────────────────────────┘
+
+# Improve Classification Rules
+HIGH_RISK = [
+    "fraud", "unauthorized", "hacked", "stolen",
+    "identity theft", "suspicious activity"
+]
+
+MEDIUM_RISK = [
+    "charged", "refund", "failed payment",
+    "account locked", "cannot access"
+]
+
+CRITICAL_DOMAINS = {
+    "Visa": ["payment", "card", "transaction"],
+    "HackerRank": ["test failed", "submission error"],
+    "Claude": ["api error", "rate limit"]
+}
+
+# Add rule override:
+if domain == "Visa" and risk != "LOW":
+    return "ESCALATE"
+👉 Why:
+Finance domain = zero tolerance for mistakes.
+
