@@ -1,11 +1,3 @@
-#!/usr/bin/env python3
-"""
-Generates the output.csv predictions using grounded knowledge from the
-fetched support corpora (HackerRank, Claude, Visa support sites).
-This script does NOT require an API key — it uses hardcoded decisions
-derived from corpus research to produce the final predictions CSV.
-"""
-
 import csv
 
 PREDICTIONS = [
